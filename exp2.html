@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Banking UI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #f2f2f2;
+    }
+
+    .bank-container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 350px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .balance-box {
+      font-size: 24px;
+      margin: 20px 0;
+      padding: 15px;
+      border: 2px solid #4CAF50;
+      border-radius: 8px;
+      color: #4CAF50;
+      font-weight: bold;
+    }
+
+    .btn-group {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .deposit {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    .withdraw {
+      background-color: #f44336;
+      color: white;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    @media (max-width: 480px) {
+      .btn-group {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bank-container">
+    <h2>My Bank</h2>
+    <div class="balance-box" id="balance">₹ 0</div>
+    <div class="btn-group">
+      <button class="deposit" onclick="updateBalance(100)">Deposit</button>
+      <button class="withdraw" onclick="updateBalance(-100)">Withdraw</button>
+    </div>
+  </div>
+
+  <script>
+    let balance = 0;
+    function updateBalance(amount) {
+      if (balance + amount >= 0) {
+        balance += amount;
+        document.getElementById('balance').textContent = `₹ ${balance}`;
+      } else {
+        alert("Insufficient Balance!");
+      }
+    }
+  </script>
+
+</body>
+</html>
