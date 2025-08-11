@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SVG Drawing Tool</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+    }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      align-items: center;
+    }
+    .tool-button {
+      padding: 10px 15px;
+      border: 2px solid #333;
+      background-color: #fff;
+      cursor: pointer;
+      border-radius: 5px;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+    .tool-button:hover {
+      background-color: #f0f0f0;
+    }
+    .tool-button.active {
+      background-color: #0078ff;
+      color: white;
+      border-color: #0078ff;
+    }
+    .tool-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    svg {
+      border: 2px solid #333;
+      background-color: #f9f9f9;
+      cursor: crosshair;
+    }
+    svg.eraser-mode {
+      cursor: grab;
+    }
+  </style>
+</head>
+<body>
+  <h2>Interactive SVG Drawing Tool</h2>
+  
+  <div class="toolbar">
+    <button id="drawBtn" class="tool-button active">✏️ Draw</button>
+    <button id="eraserBtn" class="tool-button">🧽 Eraser</button>
+    <button id="undoBtn" class="tool-button">↶ Undo</button>
+    <button id="redoBtn" class="tool-button">↷ Redo</button>
+    <button id="clearBtn" class="tool-button">🗑️ Clear All</button>
+  </div>
+
+  <svg id="drawingCanvas" width="800" height="500"></svg>
+
+  <script>
+    const svg = document.getElementById("drawingCanvas");
+    let isDrawing = false;
+    let currentPath = null;
+    let pathData = "";
+    let currentTool = "draw"; // "draw" or "eraser"
+    let drawingHistory = [];
+    let historyStep = -1;
+
+    // Tool buttons
+    const drawBtn = document.getElementById("drawBtn");
+    const eraserBtn = document.getElementById("eraserBtn");
+    const undoBtn = document.getElementById("undoBtn");
+    const redoBtn = document.getElementById("redoBtn");
+    const clearBtn = document.getElementById("clearBtn");
+
+    // Tool selection
+    drawBtn.addEventListener("click", () => setTool("draw"));
+    eraserBtn.addEventListener("click", () => setTool("eraser"));
+    undoBtn.addEventListener("click", undo);
+    redoBtn.addEventListener("click", redo);
+    clearBtn.addEventListener("click", clearCanvas);
+
+    function setTool(tool) {
+      currentTool = tool;
+      drawBtn.classList.toggle("active", tool === "draw");
+      eraserBtn.classList.toggle("active", tool === "eraser");
+      svg.classList.toggle("eraser-mode", tool === "eraser");
+    }
+
+    function saveState() {
+      historyStep++;
+      if (historyStep < drawingHistory.length) {
+        drawingHistory.length = historyStep;
+      }
+      drawingHistory.push(svg.innerHTML);
+      updateButtons();
+    }
+
+    function undo() {
+      if (historyStep > 0) {
+        historyStep--;
+        svg.innerHTML = drawingHistory[historyStep];
+        updateButtons();
+      }
+    }
+
+    function redo() {
+      if (historyStep < drawingHistory.length - 1) {
+        historyStep++;
+        svg.innerHTML = drawingHistory[historyStep];
+        updateButtons();
+      }
+    }
+
+    function clearCanvas() {
+      svg.innerHTML = "";
+      saveState();
+    }
+
+    function updateButtons() {
+      undoBtn.disabled = historyStep <= 0;
+      redoBtn.disabled = historyStep >= drawingHistory.length - 1;
+    }
+
+    // Initialize with empty state
+    saveState();
+
+    svg.addEventListener("mousedown", (e) => {
+      if (currentTool === "eraser") return; // Eraser handles clicks differently
+      
+      isDrawing = true;
+      const rect = svg.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      // Create a new path element for freehand drawing
+      currentPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      pathData = `M ${x} ${y}`;
+      currentPath.setAttribute("d", pathData);
+      currentPath.setAttribute("fill", "none");
+      currentPath.setAttribute("stroke", "#0078ff");
+      currentPath.setAttribute("stroke-width", "3");
+      currentPath.setAttribute("stroke-linecap", "round");
+      currentPath.setAttribute("stroke-linejoin", "round");
+      svg.appendChild(currentPath);
+    });
+
+    svg.addEventListener("mousemove", (e) => {
+      if (currentTool === "eraser") return;
+      if (!isDrawing || !currentPath) return;
+      
+      const rect = svg.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      // Add line to the current position
+      pathData += ` L ${x} ${y}`;
+      currentPath.setAttribute("d", pathData);
+    });
+
+    svg.addEventListener("mouseup", () => {
+      if (currentTool === "draw" && isDrawing) {
+        saveState();
+      }
+      isDrawing = false;
+      currentPath = null;
+      pathData = "";
+    });
+
+    // Prevent drawing when mouse leaves the canvas
+    svg.addEventListener("mouseleave", () => {
+      if (currentTool === "draw" && isDrawing) {
+        saveState();
+      }
+      isDrawing = false;
+      currentPath = null;
+      pathData = "";
+    });
+
+    // Eraser functionality
+    svg.addEventListener("click", (e) => {
+      if (currentTool !== "eraser") return;
+      
+      const rect = svg.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      // Find the element at the clicked position
+      const elementAtPoint = document.elementFromPoint(e.clientX, e.clientY);
+      
+      // If it's a path element within our SVG, remove it
+      if (elementAtPoint && elementAtPoint.tagName === "path" && elementAtPoint.parentNode === svg) {
+        elementAtPoint.remove();
+        saveState();
+      }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if (e.ctrlKey && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
+        e.preventDefault();
+        redo();
+      }
+    });
+  </script>
+</body>
+</html>
