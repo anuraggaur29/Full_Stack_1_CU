@@ -1,0 +1,30 @@
+db.products.insertMany([
+  {
+    name: "Running Shoes",
+    price: 120,
+    category: "Footwear",
+    variants: [
+      { color: "Red", size: "M", stock: 10 },
+      { color: "Blue", size: "L", stock: 5 }
+    ]
+  },
+  {
+    name: "Winter Jacket",
+    price: 200,
+    category: "Apparel",
+    variants: [
+      { color: "Black", size: "S", stock: 8 },
+      { color: "Gray", size: "M", stock: 12 }
+    ]
+  },
+  {
+    name: "Smartphone",
+    price: 699,
+    category: "Electronics",
+    variants: []
+  }
+]);
+db.products.find({});
+db.products.find({ category: "Electronics" });
+db.products.find({}, { name: 1, "variants.color": 1 });
+db.products.find({ "variants.color": "Blue" });
